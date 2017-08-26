@@ -14,6 +14,7 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.service.pagination.PaginationList;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.format.TextColor;
 import org.spongepowered.api.text.format.TextColors;
 
 import java.util.ArrayList;
@@ -65,18 +66,18 @@ public class CmdList implements CommandExecutor {
         Optional<String> filterString = commandContext.getOne("filter");
         List<String> filters = filterString.<List<String>>map(s -> Lists.newArrayList(s.split("\\|"))).orElse(new ArrayList<>());
 
+        for (String filter : filters) {
+            if (!(filter.equals("personal") || filter.equals("active") || filter.equals("world"))) {
+                commandSource.sendMessage(BetterChunkLoader.getPrefix().concat(Text.builder("Invalid filter: " + filter).color(TextColors.RED).build()));
+                return CommandResult.empty();
+            }
+        }
+
         clList.forEach(chunkLoader -> {
-            if (filters.contains("active") && !chunkLoader.isActive()) {
+            if (filters.contains("personal") && chunkLoader.isAlwaysOn() ||
+                    filters.contains("active") && !chunkLoader.isActive() ||
+                    filters.contains("world") && !chunkLoader.isAlwaysOn())
                 return;
-            }
-
-            if (filters.contains("world") && !chunkLoader.isAlwaysOn()) {
-                return;
-            }
-
-            if (filters.contains("personal") && chunkLoader.isAlwaysOn()) {
-                return;
-            }
 
             texts.add(chunkLoader.toText(showUser, commandSource.hasPermission("minecraft.command.tp"), currentWorld));
         });
