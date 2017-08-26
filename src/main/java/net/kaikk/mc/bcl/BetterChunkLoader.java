@@ -1,5 +1,6 @@
 package net.kaikk.mc.bcl;
 
+import com.flowpowered.math.vector.Vector3d;
 import com.google.inject.Inject;
 import net.kaikk.mc.bcl.commands.CmdBCL;
 import net.kaikk.mc.bcl.commands.CmdBalance;
@@ -20,12 +21,18 @@ import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.ConfigDir;
+import org.spongepowered.api.effect.particle.ParticleEffect;
+import org.spongepowered.api.effect.particle.ParticleOptions;
+import org.spongepowered.api.effect.particle.ParticleTypes;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 import org.spongepowered.api.event.game.state.GameStoppingServerEvent;
+import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.util.Color;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,6 +43,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 @Plugin(id = "betterchunkloader",
         name = "@name@",
@@ -53,6 +62,7 @@ public class BetterChunkLoader {
     @ConfigDir(sharedRoot = false)
     private Path configDir;
     private Map<String, List<CChunkLoader>> activeChunkLoaders;
+    private Task effectTask;
 
     public static BetterChunkLoader instance() {
         return instance;
@@ -166,6 +176,7 @@ public class BetterChunkLoader {
             logger.info("Loading Listeners...");
             initializeListeners();
             initializeCommands();
+            initializeEffect();
 
             logger.info("Load complete.");
         } catch (Exception e) {
@@ -181,7 +192,21 @@ public class BetterChunkLoader {
             this.unloadChunks(cl);
         }
 
+        if (effectTask != null){
+            effectTask.cancel();
+        }
+
         instance = null;
+    }
+
+    private void initializeEffect() {
+        if (!Config.getConfig().get().getNode("Effect").getBoolean()) {
+            return;
+        }
+
+        effectTask = Task.builder().execute(new EffectTask())
+                .interval(100, TimeUnit.MILLISECONDS)
+                .name("Effect").submit(this);
     }
 
     private void initializeListeners() {
@@ -298,5 +323,19 @@ public class BetterChunkLoader {
             chunkLoaders.addAll(clList);
         }
         return chunkLoaders;
+    }
+
+    private class EffectTask implements Consumer<Task> {
+        private ParticleEffect effectWorld = ParticleEffect.builder().type(ParticleTypes.REDSTONE_DUST).option(ParticleOptions.COLOR, Color.CYAN).build();
+        private ParticleEffect effectPersonal = ParticleEffect.builder().type(ParticleTypes.REDSTONE_DUST).option(ParticleOptions.COLOR, Color.WHITE).build();
+
+        @Override
+        public void accept(Task task) {
+
+            for (CChunkLoader cl : getActiveChunkloaders()) {
+                Vector3d pos = cl.getLoc().getPosition().add(Math.random(), 1.1, Math.random());
+                cl.getLoc().getExtent().spawnParticles(cl.isAlwaysOn() ? effectWorld : effectPersonal, pos);
+            }
+        }
     }
 }

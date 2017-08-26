@@ -61,6 +61,7 @@ public class Config implements Configurable {
         get().getNode("ServerName").setValue("aServer").setComment("Unique name of server");
         get().getNode("MaxHoursOffline").setValue(72).setComment("Time in hours before player's chunkloaders become inactive.");
         get().getNode("DataStore").setValue("MySQL").setComment("Currently the only DataStore...");
+        get().getNode("Effect").setValue(true).setComment("Enable the effects on the chunkloaders");
         get().getNode("DefaultChunksAmount", "World").setValue(0);
         get().getNode("DefaultChunksAmount", "Personal").setValue(0);
         get().getNode("MaxChunksAmount", "World").setValue(250);
