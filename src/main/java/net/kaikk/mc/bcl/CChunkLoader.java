@@ -56,6 +56,7 @@ public class CChunkLoader extends ChunkLoader {
     private Date creationDate;
     private boolean isAlwaysOn;
     private String serverName;
+    private boolean active;
 
     public CChunkLoader() {
     }
@@ -315,6 +316,7 @@ public class CChunkLoader extends ChunkLoader {
         String text = this.isAlwaysOn ? "World" : "Personal";
 
         Text.Builder builder = Text.builder()
+                .append(Text.builder("* ").onHover(TextActions.showText(Text.of(active ? "Active" : "Inactive"))).color(active ? TextColors.GREEN : TextColors.RED).build())
                 .append(Text.builder("[" + text + "] ").color(color).build());
 
         if (showUser) {
@@ -463,4 +465,11 @@ public class CChunkLoader extends ChunkLoader {
         return adminUUID.equals(this.owner);
     }
 
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
 }

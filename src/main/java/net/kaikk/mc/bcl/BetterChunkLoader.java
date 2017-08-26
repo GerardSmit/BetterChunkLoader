@@ -235,10 +235,11 @@ public class BetterChunkLoader {
 
         CommandSpec cmdList = CommandSpec.builder()
                 .arguments(
-                        GenericArguments.firstParsing(
+                        GenericArguments.optionalWeak(GenericArguments.firstParsing(
                                 GenericArguments.literal(Text.of("all"), "all"),
                                 GenericArguments.requiringPermission(GenericArguments.user(Text.of("user")), BCLPermission.COMMAND_LIST_OTHERS)
-                        )
+                        )),
+                        GenericArguments.optional(GenericArguments.string(Text.of("filter")))
                 )
                 .permission(BCLPermission.COMMAND_LIST_SELF)
                 .executor(new CmdList())
@@ -302,6 +303,7 @@ public class BetterChunkLoader {
                 clList = new ArrayList<>();
                 activeChunkLoaders.put(chunkloader.getWorldName(), clList);
             }
+            chunkloader.setActive(true);
             clList.add(chunkloader);
         }
     }
@@ -311,6 +313,7 @@ public class BetterChunkLoader {
         if (chunkloader.getServerName().equalsIgnoreCase(Config.getConfig().get().getNode("ServerName").getString())) {
             BCLForgeLib.instance().removeChunkLoader(chunkloader);
             List<CChunkLoader> clList = activeChunkLoaders.get(chunkloader.getWorldName());
+            chunkloader.setActive(false);
             clList.remove(chunkloader);
         }
     }

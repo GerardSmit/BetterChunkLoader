@@ -1,6 +1,7 @@
 package net.kaikk.mc.bcl.commands;
 
 import com.google.common.collect.Lists;
+import net.kaikk.mc.bcl.BetterChunkLoader;
 import net.kaikk.mc.bcl.CChunkLoader;
 import net.kaikk.mc.bcl.datastore.DataStoreManager;
 import net.kaikk.mc.bcl.utils.Messenger;
@@ -15,6 +16,7 @@ import org.spongepowered.api.service.pagination.PaginationList;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -49,19 +51,34 @@ public class CmdList implements CommandExecutor {
             return CommandResult.empty();
         }
         List<CChunkLoader> clList;
-        boolean showUser = false;
+        boolean showUser;
         if (commandContext.getOne("all").isPresent()) {
             clList = DataStoreManager.getDataStore().getChunkLoaders();
             name = "all";
             showUser = true;
         } else {
             clList = DataStoreManager.getDataStore().getChunkLoaders(user);
+            showUser = false;
         }
 
         List<Text> texts = Lists.newArrayList();
-        boolean finalShowUser = showUser;
+        Optional<String> filterString = commandContext.getOne("filter");
+        List<String> filters = filterString.<List<String>>map(s -> Lists.newArrayList(s.split("\\|"))).orElse(new ArrayList<>());
+
         clList.forEach(chunkLoader -> {
-            texts.add(chunkLoader.toText(finalShowUser, commandSource.hasPermission("minecraft.command.tp"), currentWorld));
+            if (filters.contains("active") && !chunkLoader.isActive()) {
+                return;
+            }
+
+            if (filters.contains("world") && !chunkLoader.isAlwaysOn()) {
+                return;
+            }
+
+            if (filters.contains("personal") && chunkLoader.isAlwaysOn()) {
+                return;
+            }
+
+            texts.add(chunkLoader.toText(showUser, commandSource.hasPermission("minecraft.command.tp"), currentWorld));
         });
 
         if (texts.isEmpty()) {
@@ -69,7 +86,7 @@ public class CmdList implements CommandExecutor {
         }
 
         PaginationList.builder()
-                .title(Text.of(TextColors.GOLD,name + " Chunkloaders"))
+                .title(Text.of(TextColors.GOLD,name + (filters.size() > 0 ? " " + String.join(" and ", filters) : "") + " Chunkloaders"))
                 .contents(texts)
                 .padding(Text.of("-"))
                 .sendTo(commandSource);

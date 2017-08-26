@@ -25,9 +25,9 @@ public class CmdBCL implements CommandExecutor {
         }
         if (commandSource.hasPermission(BCLPermission.COMMAND_LIST_SELF)) {
             if(commandSource.hasPermission(BCLPermission.COMMAND_LIST_OTHERS)){
-                message.append(Text.NEW_LINE).append(Text.builder("/bcl list [player]").color(TextColors.BLUE).build());
+                message.append(Text.NEW_LINE).append(Text.builder("/bcl list [player|all] [active|personal|world]").color(TextColors.BLUE).build());
             }else {
-                message.append(Text.NEW_LINE).append(Text.builder("/bcl list").color(TextColors.BLUE).build());
+                message.append(Text.NEW_LINE).append(Text.builder("/bcl list [active|personal|world]").color(TextColors.BLUE).build());
             }
         }
         if (commandSource.hasPermission(BCLPermission.COMMAND_INFO)) {
