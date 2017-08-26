@@ -25,7 +25,10 @@ import org.spongepowered.api.item.inventory.Slot;
 import org.spongepowered.api.item.inventory.property.InventoryTitle;
 import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.service.user.UserStorageService;
+import org.spongepowered.api.text.LiteralText;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.action.ClickAction;
+import org.spongepowered.api.text.action.TextActions;
 import org.spongepowered.api.text.format.TextColor;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.world.Location;
@@ -307,7 +310,7 @@ public class CChunkLoader extends ChunkLoader {
     }
 
 
-    public Text toText(boolean showUser) {
+    public Text toText(boolean showUser, boolean teleport, String fromWorld) {
         TextColor color = this.isAlwaysOn ? TextColors.AQUA : TextColors.GRAY;
         String text = this.isAlwaysOn ? "World" : "Personal";
 
@@ -318,10 +321,20 @@ public class CChunkLoader extends ChunkLoader {
             builder.append(Text.of(getOwnerName() + " "));
         }
 
+        LiteralText.Builder locationBuilder = Text.builder(getPrettyLocationString() + " ").color(TextColors.GOLD);
+
+        if (teleport) {
+            if (loc.getExtent().getName().equals(fromWorld)) {
+                locationBuilder.onHover(TextActions.showText(Text.of("Teleport to the chunkloader"))).onClick(TextActions.runCommand("/tp " + (loc.getX() + 0.5) + " " + (loc.getY() + 1) + " " + (loc.getZ() + 0.5)));
+            } else {
+                locationBuilder.onHover(TextActions.showText(Text.of("Please enter the dimension before you can teleport to it")));
+            }
+        }
+
         return builder
                 .append(Text.builder(sizeX(getRange())).color(TextColors.GOLD).build())
                 .append(Text.of(" - "))
-                .append(Text.builder(getPrettyLocationString() + " ").color(TextColors.GOLD).build())
+                .append(locationBuilder.build())
                 .toText();
 
         // (this.isAlwaysOn ? "y" : "n") + " - " + this.sizeX() + " - " + this.loc.toString() + " - " + this.serverName;

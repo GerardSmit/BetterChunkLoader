@@ -29,14 +29,21 @@ public class CmdList implements CommandExecutor {
         Optional<User> optionalUser = commandContext.getOne("user");
         UUID user;
         String name;
+        String currentWorld;
 
         if (optionalUser.isPresent()) {
             user = optionalUser.get().getUniqueId();
             name = optionalUser.get().getName();
+
+            if (commandSource instanceof Player) {
+                currentWorld = ((Player) commandSource).getWorld().getName();
+            } else {
+                currentWorld = null;
+            }
         } else if (commandSource instanceof Player) {
             user = ((Player) commandSource).getUniqueId();
             name = commandSource.getName();
-
+            currentWorld = ((Player) commandSource).getWorld().getName();
         } else {
             Messenger.senderNotPlayerError(commandSource);
             return CommandResult.empty();
@@ -54,7 +61,7 @@ public class CmdList implements CommandExecutor {
         List<Text> texts = Lists.newArrayList();
         boolean finalShowUser = showUser;
         clList.forEach(chunkLoader -> {
-            texts.add(chunkLoader.toText(finalShowUser));
+            texts.add(chunkLoader.toText(finalShowUser, commandSource.hasPermission("minecraft.command.tp"), currentWorld));
         });
 
         if (texts.isEmpty()) {
