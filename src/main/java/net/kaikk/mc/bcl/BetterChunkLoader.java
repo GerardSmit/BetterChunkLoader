@@ -236,7 +236,7 @@ public class BetterChunkLoader {
         CommandSpec cmdList = CommandSpec.builder()
                 .arguments(
                         GenericArguments.optionalWeak(GenericArguments.firstParsing(
-                                GenericArguments.literal(Text.of("all"), "all"),
+                                GenericArguments.requiringPermission(GenericArguments.literal(Text.of("all"), "all"), BCLPermission.COMMAND_LIST_ALL),
                                 GenericArguments.requiringPermission(GenericArguments.user(Text.of("user")), BCLPermission.COMMAND_LIST_OTHERS)
                         )),
                         GenericArguments.optional(GenericArguments.string(Text.of("filter")))

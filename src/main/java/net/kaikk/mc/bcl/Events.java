@@ -1,5 +1,7 @@
 package net.kaikk.mc.bcl;
 
+import com.flowpowered.math.vector.Vector3d;
+import com.flowpowered.math.vector.Vector3i;
 import net.kaikk.mc.bcl.config.Config;
 import net.kaikk.mc.bcl.datastore.DataStoreManager;
 import net.kaikk.mc.bcl.utils.BCLPermission;
@@ -19,6 +21,7 @@ import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,12 +31,14 @@ public class Events {
     @Listener
     public void onPlayerInteractBlockSecondary(InteractBlockEvent.Secondary.MainHand event, @First Player player,
             @Getter("getTargetBlock") BlockSnapshot clickedBlock) {
+        boolean isChunkTool = player.getItemInHand(HandTypes.MAIN_HAND).isPresent() && player.getItemInHand(HandTypes.MAIN_HAND).get().getItem().getType()
+                .equals(ItemTypes.BLAZE_ROD);
+
         if (clickedBlock.getState().getType().equals(BlockTypes.DIAMOND_BLOCK) || clickedBlock.getState().getType().equals(BlockTypes.IRON_BLOCK)) {
             CChunkLoader chunkLoader = DataStoreManager.getDataStore().getChunkLoaderAt(clickedBlock.getLocation().get());
             boolean ChunkLoaderOnThisServer = chunkLoader != null;
 
-            if (player.getItemInHand(HandTypes.MAIN_HAND).isPresent() && player.getItemInHand(HandTypes.MAIN_HAND).get().getItem().getType()
-                    .equals(ItemTypes.BLAZE_ROD)) {
+            if (isChunkTool) {
                 boolean adminLoader =
                         chunkLoader != null && chunkLoader.isAdminChunkLoader() && player.hasPermission(BCLPermission.ABILITY_ADMINLOADER);
                 // if the chunkloader is not on this server or the player can edit chunkloader or if it is an admin chunkloader then we should show
@@ -61,6 +66,43 @@ public class Events {
                     player.sendMessage(Text.of(TextColors.GOLD,
                             "Iron and Diamond blocks can be converted into chunk loaders. Right click it with a blaze rod."));
                 }
+            }
+        } else if(isChunkTool) {
+            List<CChunkLoader> loaders = new ArrayList<>();
+
+            for (CChunkLoader cl : BetterChunkLoader.instance().getActiveChunkloaders()) {
+                Vector3i pos = player.getLocation().getChunkPosition();
+                if (cl.contains(pos.getX(), pos.getZ())) {
+                    loaders.add(cl);
+                }
+            }
+
+            if (loaders.size() == 0) {
+                player.sendMessage(BetterChunkLoader.getPrefix().concat(Text.of(TextColors.RED, "This chunk is not chunkloaded.")));
+            } else if(loaders.size() == 1) {
+                player.sendMessage(BetterChunkLoader.getPrefix().concat(Text.of(loaders.get(0).isAlwaysOn() ? TextColors.GREEN : TextColors.YELLOW, "This chunk is " + (loaders.get(0).isAlwaysOn() ? "world" : "personal") + " chunkloaded.")));
+            } else {
+                String text = "";
+                int personal = 0;
+                int world = 0;
+
+                for (CChunkLoader cl : loaders) {
+                    if (cl.isAlwaysOn()) {
+                        world++;
+                    } else {
+                        personal++;
+                    }
+                }
+
+                if (world > 0) {
+                    text += "  " + world + " world chunkloader" + (world > 1 ? "s" : "");
+                }
+
+                if (personal > 0) {
+                    text += (text.length() > 0 ? "\n" : "") + "  " + personal + " personal chunkloader" + (personal > 1 ? "s" : "");
+                }
+
+                player.sendMessage(BetterChunkLoader.getPrefix().concat(Text.of(world > 0 ? TextColors.GREEN : TextColors.YELLOW, "This chunk is chunkloaded by:\n" + text)));
             }
         }
     }

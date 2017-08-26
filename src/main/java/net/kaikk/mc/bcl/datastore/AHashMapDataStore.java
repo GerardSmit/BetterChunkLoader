@@ -3,16 +3,15 @@ package net.kaikk.mc.bcl.datastore;
 import net.kaikk.mc.bcl.BetterChunkLoader;
 import net.kaikk.mc.bcl.CChunkLoader;
 import net.kaikk.mc.bcl.config.Config;
+import net.kaikk.mc.bcl.utils.Utilities;
+import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import org.spongepowered.api.effect.particle.ParticleEffect;
 import org.spongepowered.api.effect.particle.ParticleTypes;
+import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /** An implementation of IDataStore that stores data into HashMaps
  * It's abstract because it doesn't write any data on disk: all data will be lost at server shutdown
@@ -136,7 +135,7 @@ public abstract class AHashMapDataStore implements IDataStore {
             }
         }
 
-        return clAmount;
+        return Utilities.addGroupValue(playerId, "World", clAmount);
     }
 
     @Override
@@ -148,7 +147,7 @@ public abstract class AHashMapDataStore implements IDataStore {
             }
         }
 
-        return clAmount;
+        return Utilities.addGroupValue(playerId, "Personal", clAmount);
     }
 
     @Override

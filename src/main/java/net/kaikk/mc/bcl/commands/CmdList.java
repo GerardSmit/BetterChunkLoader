@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import net.kaikk.mc.bcl.BetterChunkLoader;
 import net.kaikk.mc.bcl.CChunkLoader;
 import net.kaikk.mc.bcl.datastore.DataStoreManager;
+import net.kaikk.mc.bcl.utils.BCLPermission;
 import net.kaikk.mc.bcl.utils.Messenger;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -30,12 +31,12 @@ public class CmdList implements CommandExecutor {
     @Override
     public CommandResult execute(CommandSource commandSource, CommandContext commandContext) throws CommandException {
         Optional<User> optionalUser = commandContext.getOne("user");
-        UUID user;
+        User user;
         String name;
         String currentWorld;
 
         if (optionalUser.isPresent()) {
-            user = optionalUser.get().getUniqueId();
+            user = optionalUser.get();
             name = optionalUser.get().getName();
 
             if (commandSource instanceof Player) {
@@ -44,7 +45,7 @@ public class CmdList implements CommandExecutor {
                 currentWorld = null;
             }
         } else if (commandSource instanceof Player) {
-            user = ((Player) commandSource).getUniqueId();
+            user = ((Player) commandSource);
             name = commandSource.getName();
             currentWorld = ((Player) commandSource).getWorld().getName();
         } else {
@@ -58,7 +59,7 @@ public class CmdList implements CommandExecutor {
             name = "all";
             showUser = true;
         } else {
-            clList = DataStoreManager.getDataStore().getChunkLoaders(user);
+            clList = DataStoreManager.getDataStore().getChunkLoaders(user.getUniqueId());
             showUser = false;
         }
 
@@ -86,11 +87,24 @@ public class CmdList implements CommandExecutor {
             texts.add(Messenger.getNoChunkLoaders(name));
         }
 
-        PaginationList.builder()
+        PaginationList.Builder builder = PaginationList.builder()
                 .title(Text.of(TextColors.GOLD,name + (filters.size() > 0 ? " " + String.join(" and ", filters) : "") + " Chunkloaders"))
                 .contents(texts)
-                .padding(Text.of("-"))
-                .sendTo(commandSource);
+                .padding(Text.of("-"));
+
+        if (!showUser) {
+            String personal = "*";
+            String world = "*";
+
+            if (!user.hasPermission(BCLPermission.ABILITY_UNLIMITED)) {
+                personal = String.valueOf(DataStoreManager.getDataStore().getOnlineOnlyFreeChunksAmount(user.getUniqueId()));
+                world = String.valueOf(DataStoreManager.getDataStore().getAlwaysOnFreeChunksAmount(user.getUniqueId()));
+            }
+
+            builder.header(Text.of("Available personal chunks: " + personal + ", available world chunks: " + world));
+        }
+
+        builder.sendTo(commandSource);
 
         return CommandResult.empty();
     }

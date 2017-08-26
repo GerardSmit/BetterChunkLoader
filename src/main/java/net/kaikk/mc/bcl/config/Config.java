@@ -1,6 +1,7 @@
 package net.kaikk.mc.bcl.config;
 
 import net.kaikk.mc.bcl.BetterChunkLoader;
+import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
@@ -68,9 +69,12 @@ public class Config implements Configurable {
         get().getNode("MaxChunksAmount", "Personal").setValue(250);
 
         get().getNode("MySQL", "Hostname").setValue("host");
-        get().getNode("MySQL", "Username").setValue("user");
+        get().getNode("MySQL", "Username").setValue("root");
         get().getNode("MySQL", "Password").setValue("pass");
-        get().getNode("MySQL", "Database").setValue("db");
+        get().getNode("MySQL", "Database").setValue("minecraft");
+
+        get().getNode("Groups", "default", "World").setValue(0);
+        get().getNode("Groups", "default", "Personal").setValue(0);
     }
 
     public CommentedConfigurationNode get() {
