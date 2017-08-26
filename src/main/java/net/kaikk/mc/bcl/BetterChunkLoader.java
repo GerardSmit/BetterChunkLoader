@@ -235,12 +235,10 @@ public class BetterChunkLoader {
 
         CommandSpec cmdList = CommandSpec.builder()
                 .arguments(
-                        // TODO: figure out a good way to do this.
-                        //                        GenericArguments.optional(GenericArguments.requiringPermission(new AllElement(Text.of("all")),
-                        // BCLPermission
-                        //                .COMMAND_LIST_ALL)),
-                        GenericArguments.optional(
-                                GenericArguments.requiringPermission(GenericArguments.user(Text.of("user")), BCLPermission.COMMAND_LIST_OTHERS))
+                        GenericArguments.firstParsing(
+                                GenericArguments.literal(Text.of("all"), "all"),
+                                GenericArguments.requiringPermission(GenericArguments.user(Text.of("user")), BCLPermission.COMMAND_LIST_OTHERS)
+                        )
                 )
                 .permission(BCLPermission.COMMAND_LIST_SELF)
                 .executor(new CmdList())
