@@ -2,7 +2,6 @@ package net.kaikk.mc.bcl.commands;
 
 import net.kaikk.mc.bcl.BetterChunkLoader;
 import net.kaikk.mc.bcl.CChunkLoader;
-import net.kaikk.mc.bcl.datastore.DataStoreManager;
 import net.kaikk.mc.bcl.utils.Messenger;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -12,7 +11,6 @@ import org.spongepowered.api.command.spec.CommandExecutor;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**

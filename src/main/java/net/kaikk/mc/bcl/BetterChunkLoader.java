@@ -2,13 +2,7 @@ package net.kaikk.mc.bcl;
 
 import com.flowpowered.math.vector.Vector3d;
 import com.google.inject.Inject;
-import net.kaikk.mc.bcl.commands.CmdBCL;
-import net.kaikk.mc.bcl.commands.CmdBalance;
-import net.kaikk.mc.bcl.commands.CmdChunks;
-import net.kaikk.mc.bcl.commands.CmdDelete;
-import net.kaikk.mc.bcl.commands.CmdInfo;
-import net.kaikk.mc.bcl.commands.CmdList;
-import net.kaikk.mc.bcl.commands.CmdPurge;
+import net.kaikk.mc.bcl.commands.*;
 import net.kaikk.mc.bcl.commands.elements.ChunksChangeOperatorElement;
 import net.kaikk.mc.bcl.commands.elements.LoaderTypeElement;
 import net.kaikk.mc.bcl.config.Config;
@@ -27,7 +21,6 @@ import org.spongepowered.api.effect.particle.ParticleTypes;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 import org.spongepowered.api.event.game.state.GameStoppingServerEvent;
-import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.text.Text;
@@ -38,11 +31,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -165,7 +154,7 @@ public class BetterChunkLoader {
             for (CChunkLoader cl : DataStoreManager.getDataStore().getChunkLoaders()) {
                 if (cl.getServerName().equalsIgnoreCase(Config.getConfig().get().getNode("ServerName").getString())) {
                     if (cl.isLoadable()) {
-                        this.loadChunks(cl);
+                        this.loadChunks(cl, false);
                         count++;
                     }
                 }
@@ -189,7 +178,7 @@ public class BetterChunkLoader {
     @Listener
     public void onDisable(GameStoppingServerEvent event) {
         for (CChunkLoader cl : this.getActiveChunkloaders()) {
-            this.unloadChunks(cl);
+            this.unloadChunks(cl, false);
         }
 
         if (effectTask != null){
@@ -295,7 +284,7 @@ public class BetterChunkLoader {
     }
 
 
-    public void loadChunks(CChunkLoader chunkloader){
+    public void loadChunks(CChunkLoader chunkloader, boolean reload){
         if (chunkloader.getServerName().equalsIgnoreCase(Config.getConfig().get().getNode("ServerName").getString())) {
             BCLForgeLib.instance().addChunkLoader(chunkloader);
             List<CChunkLoader> clList = activeChunkLoaders.get(chunkloader.getWorldName());
@@ -303,17 +292,17 @@ public class BetterChunkLoader {
                 clList = new ArrayList<>();
                 activeChunkLoaders.put(chunkloader.getWorldName(), clList);
             }
-            chunkloader.setActive(true);
+            if(!reload) chunkloader.setActive(true);
             clList.add(chunkloader);
         }
     }
 
 
-    public void unloadChunks(CChunkLoader chunkloader){
+    public void unloadChunks(CChunkLoader chunkloader, boolean reload){
         if (chunkloader.getServerName().equalsIgnoreCase(Config.getConfig().get().getNode("ServerName").getString())) {
             BCLForgeLib.instance().removeChunkLoader(chunkloader);
             List<CChunkLoader> clList = activeChunkLoaders.get(chunkloader.getWorldName());
-            chunkloader.setActive(false);
+            if(!reload) chunkloader.setActive(false);
             clList.remove(chunkloader);
         }
     }

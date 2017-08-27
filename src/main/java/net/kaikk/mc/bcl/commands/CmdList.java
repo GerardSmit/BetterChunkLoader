@@ -15,13 +15,11 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.service.pagination.PaginationList;
 import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.format.TextColor;
 import org.spongepowered.api.text.format.TextColors;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Created by ROB on 08/12/2016.
@@ -33,21 +31,13 @@ public class CmdList implements CommandExecutor {
         Optional<User> optionalUser = commandContext.getOne("user");
         User user;
         String name;
-        String currentWorld;
 
         if (optionalUser.isPresent()) {
             user = optionalUser.get();
             name = optionalUser.get().getName();
-
-            if (commandSource instanceof Player) {
-                currentWorld = ((Player) commandSource).getWorld().getName();
-            } else {
-                currentWorld = null;
-            }
         } else if (commandSource instanceof Player) {
             user = ((Player) commandSource);
             name = commandSource.getName();
-            currentWorld = ((Player) commandSource).getWorld().getName();
         } else {
             Messenger.senderNotPlayerError(commandSource);
             return CommandResult.empty();
@@ -80,7 +70,7 @@ public class CmdList implements CommandExecutor {
                     filters.contains("world") && !chunkLoader.isAlwaysOn())
                 return;
 
-            texts.add(chunkLoader.toText(showUser, commandSource.hasPermission("minecraft.command.tp"), currentWorld));
+            texts.add(chunkLoader.toText(showUser, commandSource));
         });
 
         if (texts.isEmpty()) {
@@ -101,7 +91,7 @@ public class CmdList implements CommandExecutor {
                 world = String.valueOf(DataStoreManager.getDataStore().getAlwaysOnFreeChunksAmount(user.getUniqueId()));
             }
 
-            builder.header(Text.of("Available personal chunks: " + personal + ", available world chunks: " + world));
+            builder.header(Text.of("Available online chunks: " + personal + ", available offline chunks: " + world));
         }
 
         builder.sendTo(commandSource);

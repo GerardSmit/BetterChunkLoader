@@ -6,18 +6,9 @@ import net.kaikk.mc.bcl.config.Config;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
+import java.sql.*;
+import java.util.*;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.UUID;
 
 public class MySqlDataStore extends AHashMapDataStore {
 

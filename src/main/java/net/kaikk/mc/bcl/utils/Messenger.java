@@ -1,16 +1,12 @@
 package net.kaikk.mc.bcl.utils;
 
-import static org.spongepowered.api.text.format.TextColors.BLUE;
-import static org.spongepowered.api.text.format.TextColors.DARK_RED;
-import static org.spongepowered.api.text.format.TextColors.GOLD;
-import static org.spongepowered.api.text.format.TextColors.LIGHT_PURPLE;
-import static org.spongepowered.api.text.format.TextColors.RED;
-import static org.spongepowered.api.text.format.TextStyles.BOLD;
-
 import net.kaikk.mc.bcl.BetterChunkLoader;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
+
+import static org.spongepowered.api.text.format.TextColors.*;
+import static org.spongepowered.api.text.format.TextStyles.BOLD;
 
 /**
  * Created by Rob5Underscores on 10/12/2016.

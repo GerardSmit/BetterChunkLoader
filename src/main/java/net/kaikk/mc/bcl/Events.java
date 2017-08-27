@@ -1,6 +1,5 @@
 package net.kaikk.mc.bcl;
 
-import com.flowpowered.math.vector.Vector3d;
 import com.flowpowered.math.vector.Vector3i;
 import net.kaikk.mc.bcl.config.Config;
 import net.kaikk.mc.bcl.datastore.DataStoreManager;
@@ -8,6 +7,7 @@ import net.kaikk.mc.bcl.utils.BCLPermission;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.data.type.HandTypes;
+import org.spongepowered.api.effect.sound.SoundTypes;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.Listener;
@@ -73,36 +73,24 @@ public class Events {
             for (CChunkLoader cl : BetterChunkLoader.instance().getActiveChunkloaders()) {
                 Vector3i pos = player.getLocation().getChunkPosition();
                 if (cl.contains(pos.getX(), pos.getZ())) {
+                    cl.showName();
                     loaders.add(cl);
                 }
             }
 
             if (loaders.size() == 0) {
                 player.sendMessage(BetterChunkLoader.getPrefix().concat(Text.of(TextColors.RED, "This chunk is not chunkloaded.")));
-            } else if(loaders.size() == 1) {
-                player.sendMessage(BetterChunkLoader.getPrefix().concat(Text.of(loaders.get(0).isAlwaysOn() ? TextColors.GREEN : TextColors.YELLOW, "This chunk is " + (loaders.get(0).isAlwaysOn() ? "world" : "personal") + " chunkloaded.")));
+                player.playSound(SoundTypes.BLOCK_ANVIL_PLACE, player.getLocation().getPosition(), .5, 2);
             } else {
-                String text = "";
-                int personal = 0;
-                int world = 0;
+                Text.Builder text = Text.builder("This chunk is chunkloaded by\n").color(TextColors.YELLOW);
 
                 for (CChunkLoader cl : loaders) {
-                    if (cl.isAlwaysOn()) {
-                        world++;
-                    } else {
-                        personal++;
-                    }
+                    if (cl.isAlwaysOn()) text.color(TextColors.GREEN);
+                    text.append(Text.of("\n").concat(cl.toText(true, player)));
                 }
 
-                if (world > 0) {
-                    text += "  " + world + " world chunkloader" + (world > 1 ? "s" : "");
-                }
-
-                if (personal > 0) {
-                    text += (text.length() > 0 ? "\n" : "") + "  " + personal + " personal chunkloader" + (personal > 1 ? "s" : "");
-                }
-
-                player.sendMessage(BetterChunkLoader.getPrefix().concat(Text.of(world > 0 ? TextColors.GREEN : TextColors.YELLOW, "This chunk is chunkloaded by:\n" + text)));
+                player.sendMessage(BetterChunkLoader.getPrefix().concat(text.build()));
+                player.playSound(SoundTypes.UI_BUTTON_CLICK, player.getLocation().getPosition(), 1, 2);
             }
         }
     }
@@ -147,7 +135,7 @@ public class Events {
         for (CChunkLoader chunkLoader : clList) {
             if (chunkLoader.getServerName().equalsIgnoreCase(Config.getConfig().get().getNode("ServerName").getString())) {
                 if (!chunkLoader.isAlwaysOn() && chunkLoader.blockCheck()) {
-                    BetterChunkLoader.instance().loadChunks(chunkLoader);
+                    BetterChunkLoader.instance().loadChunks(chunkLoader, false);
                 }
             }
         }
@@ -161,7 +149,7 @@ public class Events {
         for (CChunkLoader chunkLoader : clList) {
             if (chunkLoader.getServerName().equalsIgnoreCase(Config.getConfig().get().getNode("ServerName").getString())) {
                 if (!chunkLoader.isAlwaysOn()) {
-                    BetterChunkLoader.instance().unloadChunks(chunkLoader);
+                    BetterChunkLoader.instance().unloadChunks(chunkLoader, false);
                 }
             }
         }
@@ -172,7 +160,7 @@ public class Events {
     public void onWorldLoad(LoadWorldEvent event) {
         for (CChunkLoader cl : DataStoreManager.getDataStore().getChunkLoaders(event.getTargetWorld().getName())) {
             if (cl.isLoadable()) {
-                BetterChunkLoader.instance().loadChunks(cl);
+                BetterChunkLoader.instance().loadChunks(cl, false);
             }
         }
     }

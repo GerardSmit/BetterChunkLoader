@@ -1,10 +1,6 @@
 package net.kaikk.mc.bcl.datastore;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /** Data store manager<br>
  * See IDataStore interface if you want to implement your custom data store */

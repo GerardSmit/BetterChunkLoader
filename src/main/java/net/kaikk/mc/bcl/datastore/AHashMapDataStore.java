@@ -4,10 +4,8 @@ import net.kaikk.mc.bcl.BetterChunkLoader;
 import net.kaikk.mc.bcl.CChunkLoader;
 import net.kaikk.mc.bcl.config.Config;
 import net.kaikk.mc.bcl.utils.Utilities;
-import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import org.spongepowered.api.effect.particle.ParticleEffect;
 import org.spongepowered.api.effect.particle.ParticleTypes;
-import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -85,7 +83,7 @@ public abstract class AHashMapDataStore implements IDataStore {
             chunkLoader.getPlayer().spawnParticles(ParticleEffect.builder().type(ParticleTypes.MOBSPAWNER_FLAMES).quantity(10).build(),
                     chunkLoader.getLoc().getPosition());
             if (chunkLoader.isLoadable()) {
-                BetterChunkLoader.instance().loadChunks(chunkLoader);
+                BetterChunkLoader.instance().loadChunks(chunkLoader, false);
             }
         }
     }
@@ -100,7 +98,7 @@ public abstract class AHashMapDataStore implements IDataStore {
             }
             clList.remove(chunkLoader);
             if (chunkLoader.getServerName().equalsIgnoreCase(Config.getConfig().get().getNode("ServerName").getString())) {
-                BetterChunkLoader.instance().unloadChunks(chunkLoader);
+                BetterChunkLoader.instance().unloadChunks(chunkLoader, false);
             }
         }
     }
@@ -116,13 +114,13 @@ public abstract class AHashMapDataStore implements IDataStore {
     @Override
     public void changeChunkLoaderRange(CChunkLoader chunkLoader, byte range) {
         if (chunkLoader.isLoadable()) {
-            BetterChunkLoader.instance().unloadChunks(chunkLoader);
+            BetterChunkLoader.instance().unloadChunks(chunkLoader, true);
         }
 
         chunkLoader.setRange(range);
 
         if (chunkLoader.isLoadable()) {
-            BetterChunkLoader.instance().loadChunks(chunkLoader);
+            BetterChunkLoader.instance().loadChunks(chunkLoader, true);
         }
     }
 

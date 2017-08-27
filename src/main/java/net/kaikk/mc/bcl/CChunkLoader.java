@@ -1,6 +1,7 @@
 package net.kaikk.mc.bcl;
 
 
+import com.flowpowered.math.vector.Vector3d;
 import net.kaikk.mc.bcl.config.Config;
 import net.kaikk.mc.bcl.datastore.DataStoreManager;
 import net.kaikk.mc.bcl.forgelib.ChunkLoader;
@@ -10,40 +11,41 @@ import net.kaikk.mc.bcl.utils.Messenger;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.effect.sound.SoundTypes;
+import org.spongepowered.api.entity.Entity;
+import org.spongepowered.api.entity.EntityTypes;
+import org.spongepowered.api.entity.living.ArmorStand;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.NamedCause;
+import org.spongepowered.api.event.cause.entity.spawn.SpawnCause;
+import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
 import org.spongepowered.api.event.item.inventory.ClickInventoryEvent;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.ItemTypes;
-import org.spongepowered.api.item.inventory.Inventory;
-import org.spongepowered.api.item.inventory.InventoryArchetype;
-import org.spongepowered.api.item.inventory.InventoryArchetypes;
-import org.spongepowered.api.item.inventory.ItemStack;
-import org.spongepowered.api.item.inventory.Slot;
+import org.spongepowered.api.item.inventory.*;
 import org.spongepowered.api.item.inventory.property.InventoryTitle;
 import org.spongepowered.api.scheduler.Task;
+import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.user.UserStorageService;
 import org.spongepowered.api.text.LiteralText;
 import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.action.ClickAction;
 import org.spongepowered.api.text.action.TextActions;
 import org.spongepowered.api.text.format.TextColor;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlRootElement;
 
 
 @XmlRootElement
@@ -57,12 +59,14 @@ public class CChunkLoader extends ChunkLoader {
     private boolean isAlwaysOn;
     private String serverName;
     private boolean active;
+    private ArmorStand armorStand;
+    private Task armorStandHideTask;
 
     public CChunkLoader() {
     }
 
     public CChunkLoader(int chunkX, int chunkZ, String worldName, byte range, UUID owner, Location<World> loc, Date creationDate, boolean isAlwaysOn,
-            String serverName) {
+                        String serverName) {
         super(chunkX, chunkZ, worldName, range);
         this.owner = owner;
         this.loc = loc;
@@ -72,7 +76,7 @@ public class CChunkLoader extends ChunkLoader {
     }
 
     public CChunkLoader(int chunkX, int chunkZ, String worldName, byte range, UUID owner, Location<World> loc, Date creationDate,
-            boolean isAlwaysOn) {
+                        boolean isAlwaysOn) {
         this(chunkX, chunkZ, worldName, range, owner, loc, creationDate, isAlwaysOn, Config.getConfig().get().getNode("ServerName").getString());
 
     }
@@ -86,10 +90,10 @@ public class CChunkLoader extends ChunkLoader {
         this.isAlwaysOn = isAlwaysOn;
     }
 
-    private static void addInventoryOption(Inventory inventory, int position, ItemType icon, String name) {
+    private static void addInventoryOption(Inventory inventory, int position, ItemType icon, Text text, int size) {
         Iterable<Slot> slotIterable = inventory.slots();
-        ItemStack itemStack = ItemStack.builder().itemType(icon).quantity(1).build();
-        itemStack.offer(Keys.DISPLAY_NAME, Text.of(name));
+        ItemStack itemStack = ItemStack.builder().itemType(icon).quantity(size).build();
+        itemStack.offer(Keys.DISPLAY_NAME, text);
         Integer iter = 0;
         for (Slot slot : slotIterable) {
             if (iter == position) {
@@ -311,22 +315,27 @@ public class CChunkLoader extends ChunkLoader {
     }
 
 
-    public Text toText(boolean showUser, boolean teleport, String fromWorld) {
-        TextColor color = this.isAlwaysOn ? TextColors.AQUA : TextColors.GRAY;
-        String text = this.isAlwaysOn ? "World" : "Personal";
+    public Text toText(boolean showUser, Subject subject) {
+        Text seperator = Text.builder(" - ").color(isAlwaysOn ? TextColors.GREEN : TextColors.YELLOW).build();
+        Text.Builder builder = Text.builder();
 
-        Text.Builder builder = Text.builder()
-                .append(Text.builder("* ").onHover(TextActions.showText(Text.of(active ? "Active" : "Inactive"))).color(active ? TextColors.GREEN : TextColors.RED).build())
-                .append(Text.builder("[" + text + "] ").color(color).build());
+        builder.append(Text.builder("* ").onHover(TextActions.showText(Text.of(active ? "Active" : "Inactive"))).color(active ? TextColors.GREEN : TextColors.RED).build());
 
-        if (showUser) {
-            builder.append(Text.of(getOwnerName() + " "));
+        if (this.isAlwaysOn) {
+            builder.append(Text.builder("[Offline] ").color(TextColors.GREEN).onHover(TextActions.showText(Text.of("The chunk is always loaded."))).build());
+        } else {
+            builder.append(Text.builder("[Online ] ").color(TextColors.YELLOW).onHover(TextActions.showText(Text.of("The chunk is only loaded when the owner is online."))).build());
         }
 
-        LiteralText.Builder locationBuilder = Text.builder(getPrettyLocationString() + " ").color(TextColors.GOLD);
+        if (showUser) {
+            builder.append(Text.builder(getOwnerName()).color(TextColors.GOLD).build());
+            builder.append(seperator);
+        }
 
-        if (teleport) {
-            if (loc.getExtent().getName().equals(fromWorld)) {
+        LiteralText.Builder locationBuilder = Text.builder(loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ() + " in " + loc.getExtent().getName()).color(TextColors.GOLD);
+
+        if (subject.hasPermission("minecraft.command.tp")) {
+            if (subject instanceof Player && ((Player) subject).getLocation().getExtent().equals(loc.getExtent())) {
                 locationBuilder.onHover(TextActions.showText(Text.of("Teleport to the chunkloader"))).onClick(TextActions.runCommand("/tp " + (loc.getX() + 0.5) + " " + (loc.getY() + 1) + " " + (loc.getZ() + 0.5)));
             } else {
                 locationBuilder.onHover(TextActions.showText(Text.of("Please enter the dimension before you can teleport to it")));
@@ -335,7 +344,7 @@ public class CChunkLoader extends ChunkLoader {
 
         return builder
                 .append(Text.builder(sizeX(getRange())).color(TextColors.GOLD).build())
-                .append(Text.of(" - "))
+                .append(seperator)
                 .append(locationBuilder.build())
                 .toText();
 
@@ -409,7 +418,9 @@ public class CChunkLoader extends ChunkLoader {
     }
 
 
-    /** Shows the chunk loader's user interface to the specified player */
+    /**
+     * Shows the chunk loader's user interface to the specified player
+     */
     void showUI(Player player) {
         String title = (this.range != -1 ? "BCL:" + this.getOwnerName() + "@" + getLocationString() :
                 "New " + (this.isAdminChunkLoader() ? "Admin " : "") + "BetterChunkLoader");
@@ -426,12 +437,35 @@ public class CChunkLoader extends ChunkLoader {
                 .listener(ClickInventoryEvent.class, createClickEventConsumer(this))
                 .build(BetterChunkLoader.instance());
         if (this.range != -1) {
-            addInventoryOption(inventory, 0, ItemTypes.REDSTONE_TORCH, "Remove");
+            addInventoryOption(inventory, 0, ItemTypes.BARRIER, Text.of("Remove"), 1);
         }
 
         int pos = 2;
+        int available;
+        if (isAlwaysOn()) {
+            available = DataStoreManager.getDataStore().getAlwaysOnFreeChunksAmount(player.getUniqueId());
+        } else {
+            available = DataStoreManager.getDataStore().getOnlineOnlyFreeChunksAmount(player.getUniqueId());
+        }
+
         for (byte i = 0; i < 5; ) {
-            addInventoryOption(inventory, pos, ItemTypes.MAP, "Size " + this.sizeX(i) + (this.getRange() == i ? " [selected]" : ""));
+            int needed = side(i) * side(i);
+
+            ItemType type;
+            Text.Builder builder = Text.builder("Size " + this.sizeX(i));
+
+            if (this.getRange() == i) {
+                builder.color(TextColors.GREEN);
+                type = ItemTypes.TNT_MINECART;
+            } else if (needed > available) {
+                builder.color(TextColors.RED);
+                type = ItemTypes.MINECART;
+            } else {
+                builder.color(TextColors.YELLOW);
+                type = ItemTypes.CHEST_MINECART;
+            }
+
+            addInventoryOption(inventory, pos, type, builder.build(), side(i));
             pos++;
             i++;
         }
@@ -456,6 +490,49 @@ public class CChunkLoader extends ChunkLoader {
         return super.range;
     }
 
+    public void hideName() {
+        if (armorStand != null) {
+            armorStand.remove();
+            armorStandHideTask.cancel();
+            armorStand = null;
+            armorStandHideTask = null;
+        }
+    }
+
+    public void showName() {
+        if (armorStand == null) {
+            World world = loc.getExtent();
+
+            Vector3d position = loc.getPosition().add(0.5, -0.75, 0.5);
+            for (Entity entity : world.getEntities()) {
+                if (entity instanceof ArmorStand && !entity.isRemoved() && entity.getLocation().getPosition().equals(position)) {
+                    armorStand = (ArmorStand) entity;
+                    break;
+                }
+            }
+
+            if (armorStand == null) {
+                armorStand = (ArmorStand) world.createEntity(EntityTypes.ARMOR_STAND, position);
+                world.spawnEntity(armorStand, Cause.source(SpawnCause.builder().type(SpawnTypes.PLUGIN).build()).build());
+            }
+
+            armorStand.offer(Keys.HAS_GRAVITY, false);
+            armorStand.offer(Keys.INVISIBLE, true);
+            armorStand.offer(Keys.INVULNERABILITY_TICKS, Integer.MAX_VALUE);
+            armorStand.offer(Keys.DISPLAY_NAME, Text.of(isAlwaysOn ? TextColors.GREEN : TextColors.YELLOW, "Chunkloader"));
+            armorStand.offer(Keys.CUSTOM_NAME_VISIBLE, true);
+        }
+
+        if (armorStandHideTask != null) {
+            armorStandHideTask.cancel();
+        }
+
+        armorStandHideTask = Task.builder()
+                .execute(this::hideName)
+                .delay(5, TimeUnit.SECONDS)
+                .name("Show name").submit(BetterChunkLoader.instance());
+    }
+
     @XmlAttribute(name = "r")
     public void setRange(byte range) {
         super.range = range;
@@ -470,6 +547,13 @@ public class CChunkLoader extends ChunkLoader {
     }
 
     public void setActive(boolean active) {
+        if (!active) {
+            hideName();
+        } else {
+
+            loc.getExtent().playSound(SoundTypes.ITEM_ARMOR_EQUIP_DIAMOND, loc.getPosition(), 1, 2);
+        }
+
         this.active = active;
     }
 }
