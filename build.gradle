@@ -4,9 +4,9 @@ plugins {
 }
 
 group = 'net.kaikk.mc'
-version = '3.4.0'
+version = '3.5.0'
 description = 'Better Chunkloading.'
-project.ext.authors = 'KaiNoMood, Rob5Underscores, KasperFranz'
+project.ext.authors = 'KaiNoMood, Rob5Underscores, KasperFranz, GerardSmit'
 
 
 dependencies {
