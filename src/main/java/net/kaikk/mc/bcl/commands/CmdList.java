@@ -58,16 +58,16 @@ public class CmdList implements CommandExecutor {
         List<String> filters = filterString.<List<String>>map(s -> Lists.newArrayList(s.split("\\|"))).orElse(new ArrayList<>());
 
         for (String filter : filters) {
-            if (!(filter.equals("personal") || filter.equals("active") || filter.equals("world"))) {
+            if (!(filter.equals("offline") || filter.equals("active") || filter.equals("online"))) {
                 commandSource.sendMessage(BetterChunkLoader.getPrefix().concat(Text.builder("Invalid filter: " + filter).color(TextColors.RED).build()));
                 return CommandResult.empty();
             }
         }
 
         clList.forEach(chunkLoader -> {
-            if (filters.contains("personal") && chunkLoader.isAlwaysOn() ||
+            if (filters.contains("offline") && chunkLoader.isAlwaysOn() ||
                     filters.contains("active") && !chunkLoader.isActive() ||
-                    filters.contains("world") && !chunkLoader.isAlwaysOn())
+                    filters.contains("online") && !chunkLoader.isAlwaysOn())
                 return;
 
             texts.add(chunkLoader.toText(showUser, commandSource));
